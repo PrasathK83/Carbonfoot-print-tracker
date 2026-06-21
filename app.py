@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from typing import Dict, Any, Tuple
 import database
 
 app = Flask(__name__)
-CORS(app)  # Enable Cross-Origin Resource Sharing for all domains
+# Restrict CORS to only specific routes if needed, or keep it open for development
+CORS(app, resources={r"/api/*": {"origins": "*"}}) 
 
 # Initialize the database
 database.init_db()
@@ -165,27 +167,35 @@ def get_badges():
     return jsonify(BADGES_DATA)
 
 @app.route("/api/calculate", methods=["POST"])
-def calculate_carbon():
-    """Computes carbon footprint based on inputs and returns breakdown."""
+def calculate_carbon() -> tuple[Any, int]:
+    """
+    Computes carbon footprint based on inputs and returns breakdown.
+    
+    Returns:
+        JSON response with the calculated footprint or an error message.
+    """
     data = request.json or {}
     
-    # Extract inputs with defaults
-    car_miles = float(data.get("carMiles", 0))
-    car_type = data.get("carType", "none")
-    public_transit = float(data.get("publicTransit", 0))
-    flight_hours = float(data.get("flightHours", 0))
-    
-    home_members = max(1, int(data.get("homeMembers", 1)))
-    electricity_bill = float(data.get("electricityBill", 0))
-    clean_energy = bool(data.get("cleanEnergy", False))
-    heating_fuel = data.get("heatingFuel", "natural-gas")
-    
-    diet_type = data.get("dietType", "meat-average")
-    food_waste = data.get("foodWaste", "average")
-    local_food = bool(data.get("localFood", False))
-    
-    shopping_level = data.get("shoppingLevel", "average")
-    recycling_habits = data.get("recyclingHabits", "partial")
+    try:
+        # Extract inputs with defaults and type casting
+        car_miles = float(data.get("carMiles", 0))
+        car_type = str(data.get("carType", "none"))
+        public_transit = float(data.get("publicTransit", 0))
+        flight_hours = float(data.get("flightHours", 0))
+        
+        home_members = max(1, int(data.get("homeMembers", 1)))
+        electricity_bill = float(data.get("electricityBill", 0))
+        clean_energy = bool(data.get("cleanEnergy", False))
+        heating_fuel = str(data.get("heatingFuel", "natural-gas"))
+        
+        diet_type = str(data.get("dietType", "meat-average"))
+        food_waste = str(data.get("foodWaste", "average"))
+        local_food = bool(data.get("localFood", False))
+        
+        shopping_level = str(data.get("shoppingLevel", "average"))
+        recycling_habits = str(data.get("recyclingHabits", "partial"))
+    except (ValueError, TypeError) as e:
+        return jsonify({"error": "Invalid input data types", "details": str(e)}), 400
 
     # 1. Transportation Calculation
     transport_co2 = 0
@@ -258,7 +268,7 @@ def calculate_carbon():
         "total": round(transport_co2 + energy_co2 + food_co2 + shopping_co2, 2)
     }
     
-    return jsonify(results)
+    return jsonify(results), 200
 
 @app.route("/api/user/save", methods=["POST"])
 def save_user():

@@ -50,20 +50,20 @@
         <span class="logo-text">EcoTrace</span>
       </div>
       
-      <nav class="nav-menu">
-        <a href="#dashboard" class="nav-item active" data-tab="dashboard">
+      <nav class="nav-menu" role="tablist" aria-label="Main Navigation">
+        <a href="#dashboard" class="nav-item active" data-tab="dashboard" role="tab" aria-selected="true" aria-controls="tab-dashboard">
           <i data-lucide="layout-dashboard"></i>
           <span>Dashboard</span>
         </a>
-        <a href="#calculator" class="nav-item" data-tab="calculator">
+        <a href="#calculator" class="nav-item" data-tab="calculator" role="tab" aria-selected="false" aria-controls="tab-calculator">
           <i data-lucide="calculator"></i>
           <span>Footprint Calculator</span>
         </a>
-        <a href="#actions" class="nav-item" data-tab="actions">
+        <a href="#actions" class="nav-item" data-tab="actions" role="tab" aria-selected="false" aria-controls="tab-actions">
           <i data-lucide="check-square"></i>
           <span>Action Tracker</span>
         </a>
-        <a href="#badges" class="nav-item" data-tab="badges">
+        <a href="#badges" class="nav-item" data-tab="badges" role="tab" aria-selected="false" aria-controls="tab-badges">
           <i data-lucide="award"></i>
           <span>Achievements</span>
         </a>
@@ -111,7 +111,7 @@
       </header>
 
       <!-- TAB 1: DASHBOARD -->
-      <section id="tab-dashboard" class="tab-content active">
+      <section id="tab-dashboard" class="tab-content active" role="tabpanel" aria-labelledby="tab-dashboard">
         <div class="dashboard-grid">
           <!-- Main Carbon Stats -->
           <div class="stat-card primary-stat glass-panel">
@@ -120,7 +120,7 @@
               <span class="badge-tag label-warning">Annualized Est.</span>
             </div>
             <div class="stat-body">
-              <div class="big-metric">
+              <div class="big-metric" aria-live="polite">
                 <span class="value" id="dash-total-val">0.0</span>
                 <span class="unit">tonnes CO₂e / yr</span>
               </div>
@@ -185,7 +185,7 @@
       </section>
 
       <!-- TAB 2: CALCULATOR -->
-      <section id="tab-calculator" class="tab-content">
+      <section id="tab-calculator" class="tab-content" role="tabpanel" aria-labelledby="tab-calculator">
         <div class="calculator-container glass-panel">
           <div class="calc-sidebar">
             <div class="calc-steps-nav">
@@ -378,7 +378,7 @@
       </section>
 
       <!-- TAB 3: ACTIONS -->
-      <section id="tab-actions" class="tab-content">
+      <section id="tab-actions" class="tab-content" role="tabpanel" aria-labelledby="tab-actions">
         <div class="actions-header glass-panel">
           <div class="actions-summary">
             <h2>Your Carbon Reduction Journey</h2>
@@ -428,7 +428,7 @@
       </section>
 
       <!-- TAB 4: BADGES -->
-      <section id="tab-badges" class="tab-content">
+      <section id="tab-badges" class="tab-content" role="tabpanel" aria-labelledby="tab-badges">
         <div class="badges-header glass-panel">
           <h2>Achievements & Environmental Badges</h2>
           <p>Earn recognition as you hit green milestones, complete calculations, and commit to major reductions.</p>

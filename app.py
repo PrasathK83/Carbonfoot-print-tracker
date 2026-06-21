@@ -8,6 +8,22 @@ CORS(app)  # Enable Cross-Origin Resource Sharing for all domains
 # Initialize the database
 database.init_db()
 
+import os
+from flask import send_from_directory
+
+@app.route('/')
+def index():
+    """Serves the main HTML page."""
+    return send_from_directory('.', 'index.html')
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Serves static frontend files like CSS and JS."""
+    allowed_files = ['styles.css', 'app.js', 'particles.js']
+    if filename in allowed_files:
+        return send_from_directory('.', filename)
+    return jsonify({"error": "Not Found"}), 404
+
 # Static Datasets (Managed on Backend)
 ACTIONS_DATA = [
   {

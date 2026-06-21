@@ -288,8 +288,9 @@ function setupTopHeaderActions() {
           savedCO2: 0,
           unlockedBadges: []
         };
-        // Reset form controls
+        // Reset form controls and prefill with default state
         document.getElementById("footprint-form").reset();
+        prefillCalculator();
         
         // Go back to step 0
         currentStep = 0;
@@ -299,6 +300,11 @@ function setupTopHeaderActions() {
         switchTab("dashboard");
         await saveState();
         updateUI();
+        
+        // Ensure actions list reflects cleared commitments
+        const activeFilterBtn = document.querySelector(".filter-btn.active");
+        const activeFilter = activeFilterBtn ? activeFilterBtn.getAttribute("data-filter") : "all";
+        renderActions(activeFilter);
       }
     });
   }

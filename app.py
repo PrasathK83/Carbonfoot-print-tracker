@@ -1,17 +1,34 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
 from typing import Dict, Any, Tuple
+import logging
 import database
+import os
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-# Restrict CORS to only specific routes if needed, or keep it open for development
-CORS(app, resources={r"/api/*": {"origins": "*"}}) 
+
+# Restrict CORS to specific origins or localhost
+CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5000", "http://127.0.0.1:5000"]}})
 
 # Initialize the database
-database.init_db()
+try:
+    database.init_db()
+    logger.info("Database initialized successfully.")
+except Exception as e:
+    logger.error(f"Failed to initialize database: {e}")
 
-import os
-from flask import send_from_directory
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
 
 @app.route('/')
 def index():
@@ -24,6 +41,7 @@ def serve_static(filename):
     allowed_files = ['styles.css', 'app.js', 'particles.js']
     if filename in allowed_files:
         return send_from_directory('.', filename)
+    logger.warning(f"Attempted to access forbidden file: {filename}")
     return jsonify({"error": "Not Found"}), 404
 
 # Static Datasets (Managed on Backend)
@@ -270,29 +288,55 @@ def calculate_carbon() -> tuple[Any, int]:
     
     return jsonify(results), 200
 
+import re
+
+def is_valid_username(username: str) -> bool:
+    """Validates the username format."""
+    if not isinstance(username, str):
+        return False
+    # Only allow alphanumeric and underscores, length 1-50
+    return bool(re.match(r"^[a-zA-Z0-9_]{1,50}$", username))
+
 @app.route("/api/user/save", methods=["POST"])
 def save_user():
     """Saves user data dictionary to the database."""
     req_data = request.json or {}
     username = req_data.get("username", "default_user")
+    
+    if not is_valid_username(username):
+        logger.warning(f"Invalid username attempted: {username}")
+        return jsonify({"status": "error", "message": "Invalid username format"}), 400
+
     state_dict = req_data.get("state", {})
     
     if not state_dict:
         return jsonify({"status": "error", "message": "Missing state data"}), 400
         
-    database.save_user_state(username, state_dict)
-    return jsonify({"status": "success", "message": "User state saved successfully"})
+    try:
+        database.save_user_state(username, state_dict)
+        return jsonify({"status": "success", "message": "User state saved successfully"})
+    except Exception as e:
+        logger.error(f"Error saving user state: {e}")
+        return jsonify({"status": "error", "message": "Internal server error"}), 500
 
 @app.route("/api/user/load", methods=["GET"])
 def load_user():
     """Loads user data dictionary from the database."""
     username = request.args.get("username", "default_user")
-    state_dict = database.load_user_state(username)
     
-    if state_dict:
-        return jsonify({"status": "success", "found": True, "state": state_dict})
-    else:
-        return jsonify({"status": "success", "found": False, "state": None})
+    if not is_valid_username(username):
+        logger.warning(f"Invalid username attempted: {username}")
+        return jsonify({"status": "error", "message": "Invalid username format"}), 400
+
+    try:
+        state_dict = database.load_user_state(username)
+        if state_dict is not None:
+            return jsonify({"status": "success", "found": True, "state": state_dict})
+        else:
+            return jsonify({"status": "success", "found": False, "state": None})
+    except Exception as e:
+        logger.error(f"Error loading user state: {e}")
+        return jsonify({"status": "error", "message": "Internal server error"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
